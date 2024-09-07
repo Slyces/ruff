@@ -45,15 +45,46 @@
 //! similar to tracking live bindings.
 use super::bitset::{BitSet, BitSetIterator};
 use ruff_index::newtype_index;
+use serde::Serialize;
 use smallvec::SmallVec;
 
 /// A newtype-index for a definition in a particular scope.
 #[newtype_index]
 pub(super) struct ScopedDefinitionId;
 
+impl std::fmt::Display for ScopedDefinitionId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "def-{}", self.as_u32())
+    }
+}
+
+impl Serialize for ScopedDefinitionId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
 /// A newtype-index for a constraint expression in a particular scope.
 #[newtype_index]
 pub(super) struct ScopedConstraintId;
+
+impl std::fmt::Display for ScopedConstraintId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "constraint-{}", self.as_u32())
+    }
+}
+
+impl Serialize for ScopedConstraintId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
 
 /// Can reference this * 64 total definitions inline; more will fall back to the heap.
 const INLINE_BINDING_BLOCKS: usize = 3;

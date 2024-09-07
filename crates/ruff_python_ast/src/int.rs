@@ -1,8 +1,10 @@
 use std::fmt::Debug;
 use std::str::FromStr;
 
+use serde::Serialize;
+
 /// A Python integer literal. Represents both small (fits in an `i64`) and large integers.
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct Int(Number);
 
 impl FromStr for Int {
@@ -207,7 +209,7 @@ impl From<u64> for Int {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 enum Number {
     /// A "small" number that can be represented as an `u64`.
     Small(u64),

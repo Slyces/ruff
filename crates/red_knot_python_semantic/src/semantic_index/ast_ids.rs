@@ -190,10 +190,11 @@ impl AstIdsBuilder {
 /// Node key that can only be constructed for expressions.
 pub(crate) mod node_key {
     use ruff_python_ast as ast;
+    use serde::Serialize;
 
     use crate::node_key::NodeKey;
 
-    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+    #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize)]
     pub(crate) struct ExpressionNodeKey(NodeKey);
 
     impl From<ast::ExpressionRef<'_>> for ExpressionNodeKey {

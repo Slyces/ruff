@@ -2,6 +2,8 @@ use std::hash::Hash;
 use std::ops::Deref;
 
 use ruff_db::parsed::ParsedModule;
+use serde::ser::SerializeStruct;
+use serde::Serialize;
 
 /// Ref-counted owned reference to an AST node.
 ///
@@ -23,6 +25,14 @@ pub struct AstNodeRef<T> {
 
     /// Pointer to the referenced node.
     node: std::ptr::NonNull<T>,
+}
+
+impl<T: Serialize> Serialize for AstNodeRef<T> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut ser = serializer.serialize_struct("AstNodeRef", 1)?;
+        ser.serialize_field("node", self.node())?;
+        ser.end()
+    }
 }
 
 #[allow(unsafe_code)]

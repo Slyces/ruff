@@ -1,8 +1,11 @@
+use rustc_hash::FxBuildHasher;
 use std::iter::FusedIterator;
 use std::sync::Arc;
 
 use rustc_hash::FxHashMap;
 use salsa::plumbing::AsId;
+use serde::Serialize;
+use serde_map_to_array::{DefaultLabels, HashMapToArray};
 
 use ruff_db::files::File;
 use ruff_db::parsed::parsed_module;
@@ -11,8 +14,8 @@ use ruff_index::{IndexSlice, IndexVec};
 use crate::semantic_index::ast_ids::node_key::ExpressionNodeKey;
 use crate::semantic_index::ast_ids::AstIds;
 use crate::semantic_index::builder::SemanticIndexBuilder;
-use crate::semantic_index::definition::{Definition, DefinitionNodeKey};
-use crate::semantic_index::expression::Expression;
+use crate::semantic_index::definition::{Definition, DefinitionNodeKey, DisplayDefinition};
+use crate::semantic_index::expression::{DisplayExpression, Expression};
 use crate::semantic_index::symbol::{
     FileScopeId, NodeWithScopeKey, NodeWithScopeRef, Scope, ScopeId, ScopedSymbolId, SymbolTable,
 };
@@ -86,11 +89,11 @@ pub(crate) fn global_scope(db: &dyn Db, file: File) -> ScopeId<'_> {
 /// The symbol tables and use-def maps for all scopes in a file.
 #[derive(Debug)]
 pub(crate) struct SemanticIndex<'db> {
-    /// List of all symbol tables in this file, indexed by scope.
-    symbol_tables: IndexVec<FileScopeId, Arc<SymbolTable>>,
-
     /// List of all scopes in this file.
     scopes: IndexVec<FileScopeId, Scope>,
+
+    /// List of all symbol tables in this file, indexed by scope.
+    symbol_tables: IndexVec<FileScopeId, Arc<SymbolTable>>,
 
     /// Map expressions to their corresponding scope.
     scopes_by_expression: FxHashMap<ExpressionNodeKey, FileScopeId>,
@@ -120,7 +123,78 @@ pub(crate) struct SemanticIndex<'db> {
     has_future_annotations: bool,
 }
 
+#[derive(Serialize)]
+pub(crate) struct DisplaySemanticIndex {
+    /// List of all scopes in this file.
+    scopes: IndexVec<FileScopeId, Scope>,
+
+    /// List of all symbol tables in this file, indexed by scope.
+    symbol_tables: IndexVec<FileScopeId, Arc<SymbolTable>>,
+
+    /// Map from nodes that create a scope to the scope they create.
+    #[serde(
+        with = "HashMapToArray::<NodeWithScopeKey, FileScopeId, DefaultLabels, FxBuildHasher>"
+    )]
+    scopes_by_node: FxHashMap<NodeWithScopeKey, FileScopeId>,
+
+    /// Map from a standalone expression to its [`Expression`] ingredient.
+    #[serde(
+        with = "HashMapToArray::<ExpressionNodeKey, DisplayExpression, DefaultLabels, FxBuildHasher>"
+    )]
+    expressions_by_node: FxHashMap<ExpressionNodeKey, DisplayExpression>,
+
+    /// Map from a node creating a definition to its definition.
+    #[serde(
+        with = "HashMapToArray::<DefinitionNodeKey, DisplayDefinition, DefaultLabels, FxBuildHasher>"
+    )]
+    definitions_by_node: FxHashMap<DefinitionNodeKey, DisplayDefinition>,
+
+    /// Use-def map for each scope in this file.
+    use_def_maps: IndexVec<FileScopeId, Arc<use_def::DisplayUseDefMap>>,
+}
+
+impl std::fmt::Display for DisplaySemanticIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_json::to_string_pretty(self).unwrap())
+    }
+}
+
 impl<'db> SemanticIndex<'db> {
+    pub(crate) fn display(&self, db: &dyn Db) -> DisplaySemanticIndex {
+        let scopes_by_node = self
+            .scopes_by_node
+            .iter()
+            .map(|(key, value)| (key.clone(), *value))
+            .collect();
+
+        let use_def_maps = self
+            .use_def_maps
+            .iter()
+            .map(|use_def_map| Arc::new(use_def_map.as_ref().display(db)))
+            .collect();
+
+        let expressions_by_node = self
+            .expressions_by_node
+            .iter()
+            .map(|(key, value)| (key.clone(), value.display(db)))
+            .collect();
+
+        let definitions_by_node = self
+            .definitions_by_node
+            .iter()
+            .map(|(key, value)| (key.clone(), value.display(db)))
+            .collect();
+
+        DisplaySemanticIndex {
+            scopes: self.scopes.clone(),
+            symbol_tables: self.symbol_tables.clone(),
+            scopes_by_node,
+            expressions_by_node,
+            definitions_by_node,
+            use_def_maps,
+        }
+    }
+
     /// Returns the symbol table for a specific scope.
     ///
     /// Use the Salsa cached [`symbol_table()`] query if you only need the

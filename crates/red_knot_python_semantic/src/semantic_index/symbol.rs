@@ -9,15 +9,18 @@ use ruff_index::{newtype_index, IndexVec};
 use ruff_python_ast::name::Name;
 use ruff_python_ast::{self as ast};
 use rustc_hash::FxHasher;
+use serde::Serialize;
 
 use crate::ast_node_ref::AstNodeRef;
 use crate::node_key::NodeKey;
 use crate::semantic_index::{semantic_index, SymbolMap};
 use crate::Db;
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug, Serialize)]
+#[serde(transparent)]
 pub struct Symbol {
     name: Name,
+    #[serde(skip)]
     flags: SymbolFlags,
 }
 
@@ -88,6 +91,21 @@ impl From<FileSymbolId> for ScopedSymbolId {
 #[newtype_index]
 pub struct ScopedSymbolId;
 
+impl std::fmt::Display for ScopedSymbolId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "symbol-{}", self.as_usize())
+    }
+}
+
+impl Serialize for ScopedSymbolId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
 /// A cross-module identifier of a scope that can be used as a salsa query parameter.
 #[salsa::tracked]
 pub struct ScopeId<'db> {
@@ -143,6 +161,21 @@ impl<'db> ScopeId<'db> {
 #[newtype_index]
 pub struct FileScopeId;
 
+impl Serialize for FileScopeId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
+impl std::fmt::Display for FileScopeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "scope-{}", self.as_usize())
+    }
+}
+
 impl FileScopeId {
     /// Returns the scope id of the module-global scope.
     pub fn global() -> Self {
@@ -159,10 +192,12 @@ impl FileScopeId {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Serialize)]
 pub struct Scope {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(super) parent: Option<FileScopeId>,
     pub(super) kind: ScopeKind,
+    #[serde(skip)]
     pub(super) descendents: Range<FileScopeId>,
 }
 
@@ -176,7 +211,8 @@ impl Scope {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum ScopeKind {
     Module,
     Annotation,
@@ -192,13 +228,21 @@ impl ScopeKind {
 }
 
 /// Symbol table for a specific [`Scope`].
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
+#[serde(transparent)]
 pub struct SymbolTable {
     /// The symbols in this scope.
     symbols: IndexVec<ScopedSymbolId, Symbol>,
 
     /// The symbols indexed by name.
+    #[serde(skip)]
     symbols_by_name: SymbolMap,
+}
+
+impl std::fmt::Display for SymbolTable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_json::to_string(self).unwrap())
+    }
 }
 
 impl SymbolTable {
@@ -424,7 +468,8 @@ pub enum NodeWithScopeKind {
     GeneratorExpression(AstNodeRef<ast::ExprGenerator>),
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub(crate) enum NodeWithScopeKey {
     Module,
     Class(NodeKey),

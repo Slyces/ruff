@@ -5,12 +5,30 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut, RangeBounds};
 
+use serde::ser::SerializeMap;
+use serde::{Serialize, Serializer};
+
 /// An owned sequence of `T` indexed by `I`
 #[derive(Clone, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct IndexVec<I, T> {
     pub raw: Vec<T>,
     index: PhantomData<I>,
+}
+
+impl<I, T> Serialize for IndexVec<I, T>
+where
+    T: Serialize,
+    I: Idx + std::fmt::Display,
+{
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(Some(self.raw.len()))?;
+        for (i, item) in self.raw.iter().enumerate() {
+            let index = format!("{}", I::new(i));
+            map.serialize_entry(&index, item)?;
+        }
+        map.end()
+    }
 }
 
 impl<I: Idx, T> IndexVec<I, T> {

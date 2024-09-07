@@ -10,6 +10,7 @@ use crate::{
     WithItem,
 };
 use ruff_text_size::{Ranged, TextRange};
+use serde::Serialize;
 use std::ptr::NonNull;
 
 pub trait AstNode: Ranged {
@@ -7975,7 +7976,8 @@ impl Ranged for AnyNodeRef<'_> {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum NodeKind {
     ModModule,
     ModInteractive,

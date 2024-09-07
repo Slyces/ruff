@@ -4,6 +4,7 @@ use crate::semantic_index::symbol::{FileScopeId, ScopeId};
 use ruff_db::files::File;
 use ruff_python_ast as ast;
 use salsa;
+use serde::Serialize;
 
 /// An independently type-inferable expression.
 ///
@@ -27,7 +28,20 @@ pub(crate) struct Expression<'db> {
     count: countme::Count<Expression<'static>>,
 }
 
+#[derive(Serialize)]
+pub(crate) struct DisplayExpression {
+    file_scope: FileScopeId,
+    node: AstNodeRef<ast::Expr>,
+}
+
 impl<'db> Expression<'db> {
+    pub(crate) fn display(&self, db: &'db dyn Db) -> DisplayExpression {
+        DisplayExpression {
+            file_scope: self.file_scope(db),
+            node: self.node_ref(db).clone(),
+        }
+    }
+
     pub(crate) fn scope(self, db: &'db dyn Db) -> ScopeId<'db> {
         self.file_scope(db).to_scope_id(db, self.file(db))
     }

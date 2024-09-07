@@ -228,10 +228,12 @@ use self::symbol_state::{
 use crate::semantic_index::ast_ids::ScopedUseId;
 use crate::semantic_index::definition::Definition;
 use crate::semantic_index::symbol::ScopedSymbolId;
+use crate::Db;
 use ruff_index::IndexVec;
 use rustc_hash::FxHashMap;
 
 use super::constraint::Constraint;
+use serde::Serialize;
 
 mod bitset;
 mod symbol_state;
@@ -266,7 +268,22 @@ pub(crate) struct UseDefMap<'db> {
     public_symbols: IndexVec<ScopedSymbolId, SymbolState>,
 }
 
+#[derive(Serialize)]
+pub(crate) struct DisplayUseDefMap {
+    all_definitions: IndexVec<ScopedDefinitionId, super::definition::DisplayDefinition>,
+}
+
 impl<'db> UseDefMap<'db> {
+    pub(crate) fn display(&self, db: &'db dyn Db) -> DisplayUseDefMap {
+        DisplayUseDefMap {
+            all_definitions: self
+                .all_definitions
+                .iter()
+                .map(|def| def.display(db))
+                .collect(),
+        }
+    }
+
     pub(crate) fn bindings_at_use(
         &self,
         use_id: ScopedUseId,

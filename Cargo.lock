@@ -2095,6 +2095,9 @@ dependencies = [
  "ruff_vendored",
  "rustc-hash 2.0.0",
  "salsa",
+ "serde",
+ "serde-map-to-array",
+ "serde_json",
  "smallvec",
  "static_assertions",
  "tempfile",
@@ -2467,6 +2470,7 @@ name = "ruff_index"
 version = "0.0.0"
 dependencies = [
  "ruff_macros",
+ "serde",
  "static_assertions",
 ]
 
@@ -3036,6 +3040,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8e3592472072e6e22e0a54d5904d9febf8508f65fb8552499a1abc7d1078c3a"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-map-to-array"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c14b52efc56c711e0dbae3f26e0cc233f5dac336c1bf0b07e1b7dc2dca3b2cc7"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

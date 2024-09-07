@@ -12,6 +12,7 @@ use bitflags::bitflags;
 use itertools::Itertools;
 
 use ruff_text_size::{Ranged, TextLen, TextRange, TextSize};
+use serde::Serialize;
 
 use crate::name::Name;
 use crate::{
@@ -22,15 +23,16 @@ use crate::{
 };
 
 /// See also [mod](https://docs.python.org/3/library/ast.html#ast.mod)
-#[derive(Clone, Debug, PartialEq, is_macro::Is)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Serialize)]
 pub enum Mod {
     Module(ModModule),
     Expression(ModExpression),
 }
 
 /// See also [Module](https://docs.python.org/3/library/ast.html#ast.Module)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ModModule {
+    #[serde(skip)]
     pub range: TextRange,
     pub body: Vec<Stmt>,
 }
@@ -42,8 +44,9 @@ impl From<ModModule> for Mod {
 }
 
 /// See also [Expression](https://docs.python.org/3/library/ast.html#ast.Expression)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ModExpression {
+    #[serde(skip)]
     pub range: TextRange,
     pub body: Box<Expr>,
 }
@@ -55,7 +58,9 @@ impl From<ModExpression> for Mod {
 }
 
 /// See also [stmt](https://docs.python.org/3/library/ast.html#ast.stmt)
-#[derive(Clone, Debug, PartialEq, is_macro::Is)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Serialize)]
+#[serde(tag = "type")]
+#[serde(rename_all = "kebab-case")]
 pub enum Stmt {
     #[is(name = "function_def_stmt")]
     FunctionDef(StmtFunctionDef),
@@ -164,8 +169,9 @@ pub enum Stmt {
 /// `%%timeit??`, etc.
 ///
 /// [Escape kind]: IpyEscapeKind
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtIpyEscapeCommand {
+    #[serde(skip)]
     pub range: TextRange,
     pub kind: IpyEscapeKind,
     pub value: Box<str>,
@@ -182,8 +188,9 @@ impl From<StmtIpyEscapeCommand> for Stmt {
 ///
 /// This type differs from the original Python AST, as it collapses the
 /// synchronous and asynchronous variants into a single type.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtFunctionDef {
+    #[serde(skip)]
     pub range: TextRange,
     pub is_async: bool,
     pub decorator_list: Vec<Decorator>,
@@ -201,8 +208,9 @@ impl From<StmtFunctionDef> for Stmt {
 }
 
 /// See also [ClassDef](https://docs.python.org/3/library/ast.html#ast.ClassDef)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtClassDef {
+    #[serde(skip)]
     pub range: TextRange,
     pub decorator_list: Vec<Decorator>,
     pub name: Identifier,
@@ -236,8 +244,9 @@ impl From<StmtClassDef> for Stmt {
 }
 
 /// See also [Return](https://docs.python.org/3/library/ast.html#ast.Return)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtReturn {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Option<Box<Expr>>,
 }
@@ -249,8 +258,9 @@ impl From<StmtReturn> for Stmt {
 }
 
 /// See also [Delete](https://docs.python.org/3/library/ast.html#ast.Delete)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtDelete {
+    #[serde(skip)]
     pub range: TextRange,
     pub targets: Vec<Expr>,
 }
@@ -262,8 +272,9 @@ impl From<StmtDelete> for Stmt {
 }
 
 /// See also [TypeAlias](https://docs.python.org/3/library/ast.html#ast.TypeAlias)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtTypeAlias {
+    #[serde(skip)]
     pub range: TextRange,
     pub name: Box<Expr>,
     pub type_params: Option<TypeParams>,
@@ -277,8 +288,9 @@ impl From<StmtTypeAlias> for Stmt {
 }
 
 /// See also [Assign](https://docs.python.org/3/library/ast.html#ast.Assign)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtAssign {
+    #[serde(skip)]
     pub range: TextRange,
     pub targets: Vec<Expr>,
     pub value: Box<Expr>,
@@ -291,8 +303,9 @@ impl From<StmtAssign> for Stmt {
 }
 
 /// See also [AugAssign](https://docs.python.org/3/library/ast.html#ast.AugAssign)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtAugAssign {
+    #[serde(skip)]
     pub range: TextRange,
     pub target: Box<Expr>,
     pub op: Operator,
@@ -306,8 +319,9 @@ impl From<StmtAugAssign> for Stmt {
 }
 
 /// See also [AnnAssign](https://docs.python.org/3/library/ast.html#ast.AnnAssign)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtAnnAssign {
+    #[serde(skip)]
     pub range: TextRange,
     pub target: Box<Expr>,
     pub annotation: Box<Expr>,
@@ -326,8 +340,9 @@ impl From<StmtAnnAssign> for Stmt {
 ///
 /// This type differs from the original Python AST, as it collapses the
 /// synchronous and asynchronous variants into a single type.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtFor {
+    #[serde(skip)]
     pub range: TextRange,
     pub is_async: bool,
     pub target: Box<Expr>,
@@ -344,8 +359,9 @@ impl From<StmtFor> for Stmt {
 
 /// See also [While](https://docs.python.org/3/library/ast.html#ast.While) and
 /// [AsyncWhile](https://docs.python.org/3/library/ast.html#ast.AsyncWhile).
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtWhile {
+    #[serde(skip)]
     pub range: TextRange,
     pub test: Box<Expr>,
     pub body: Vec<Stmt>,
@@ -359,8 +375,9 @@ impl From<StmtWhile> for Stmt {
 }
 
 /// See also [If](https://docs.python.org/3/library/ast.html#ast.If)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtIf {
+    #[serde(skip)]
     pub range: TextRange,
     pub test: Box<Expr>,
     pub body: Vec<Stmt>,
@@ -373,8 +390,9 @@ impl From<StmtIf> for Stmt {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ElifElseClause {
+    #[serde(skip)]
     pub range: TextRange,
     pub test: Option<Expr>,
     pub body: Vec<Stmt>,
@@ -385,8 +403,9 @@ pub struct ElifElseClause {
 ///
 /// This type differs from the original Python AST, as it collapses the
 /// synchronous and asynchronous variants into a single type.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtWith {
+    #[serde(skip)]
     pub range: TextRange,
     pub is_async: bool,
     pub items: Vec<WithItem>,
@@ -400,8 +419,9 @@ impl From<StmtWith> for Stmt {
 }
 
 /// See also [Match](https://docs.python.org/3/library/ast.html#ast.Match)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtMatch {
+    #[serde(skip)]
     pub range: TextRange,
     pub subject: Box<Expr>,
     pub cases: Vec<MatchCase>,
@@ -414,8 +434,9 @@ impl From<StmtMatch> for Stmt {
 }
 
 /// See also [Raise](https://docs.python.org/3/library/ast.html#ast.Raise)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtRaise {
+    #[serde(skip)]
     pub range: TextRange,
     pub exc: Option<Box<Expr>>,
     pub cause: Option<Box<Expr>>,
@@ -429,8 +450,9 @@ impl From<StmtRaise> for Stmt {
 
 /// See also [Try](https://docs.python.org/3/library/ast.html#ast.Try) and
 /// [TryStar](https://docs.python.org/3/library/ast.html#ast.TryStar)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtTry {
+    #[serde(skip)]
     pub range: TextRange,
     pub body: Vec<Stmt>,
     pub handlers: Vec<ExceptHandler>,
@@ -446,8 +468,9 @@ impl From<StmtTry> for Stmt {
 }
 
 /// See also [Assert](https://docs.python.org/3/library/ast.html#ast.Assert)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtAssert {
+    #[serde(skip)]
     pub range: TextRange,
     pub test: Box<Expr>,
     pub msg: Option<Box<Expr>>,
@@ -460,8 +483,9 @@ impl From<StmtAssert> for Stmt {
 }
 
 /// See also [Import](https://docs.python.org/3/library/ast.html#ast.Import)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtImport {
+    #[serde(skip)]
     pub range: TextRange,
     pub names: Vec<Alias>,
 }
@@ -473,8 +497,9 @@ impl From<StmtImport> for Stmt {
 }
 
 /// See also [ImportFrom](https://docs.python.org/3/library/ast.html#ast.ImportFrom)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtImportFrom {
+    #[serde(skip)]
     pub range: TextRange,
     pub module: Option<Identifier>,
     pub names: Vec<Alias>,
@@ -488,8 +513,9 @@ impl From<StmtImportFrom> for Stmt {
 }
 
 /// See also [Global](https://docs.python.org/3/library/ast.html#ast.Global)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtGlobal {
+    #[serde(skip)]
     pub range: TextRange,
     pub names: Vec<Identifier>,
 }
@@ -501,8 +527,9 @@ impl From<StmtGlobal> for Stmt {
 }
 
 /// See also [Nonlocal](https://docs.python.org/3/library/ast.html#ast.Nonlocal)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtNonlocal {
+    #[serde(skip)]
     pub range: TextRange,
     pub names: Vec<Identifier>,
 }
@@ -514,8 +541,9 @@ impl From<StmtNonlocal> for Stmt {
 }
 
 /// See also [Expr](https://docs.python.org/3/library/ast.html#ast.Expr)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtExpr {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<Expr>,
 }
@@ -527,8 +555,9 @@ impl From<StmtExpr> for Stmt {
 }
 
 /// See also [Pass](https://docs.python.org/3/library/ast.html#ast.Pass)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtPass {
+    #[serde(skip)]
     pub range: TextRange,
 }
 
@@ -539,8 +568,9 @@ impl From<StmtPass> for Stmt {
 }
 
 /// See also [Break](https://docs.python.org/3/library/ast.html#ast.Break)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtBreak {
+    #[serde(skip)]
     pub range: TextRange,
 }
 
@@ -551,8 +581,9 @@ impl From<StmtBreak> for Stmt {
 }
 
 /// See also [Continue](https://docs.python.org/3/library/ast.html#ast.Continue)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct StmtContinue {
+    #[serde(skip)]
     pub range: TextRange,
 }
 
@@ -563,7 +594,7 @@ impl From<StmtContinue> for Stmt {
 }
 
 /// See also [expr](https://docs.python.org/3/library/ast.html#ast.expr)
-#[derive(Clone, Debug, PartialEq, is_macro::Is)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Serialize)]
 pub enum Expr {
     #[is(name = "bool_op_expr")]
     BoolOp(ExprBoolOp),
@@ -675,8 +706,9 @@ impl Expr {
 ///
 /// For more information related to terminology and syntax of escape commands,
 /// see [`StmtIpyEscapeCommand`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprIpyEscapeCommand {
+    #[serde(skip)]
     pub range: TextRange,
     pub kind: IpyEscapeKind,
     pub value: Box<str>,
@@ -689,8 +721,9 @@ impl From<ExprIpyEscapeCommand> for Expr {
 }
 
 /// See also [BoolOp](https://docs.python.org/3/library/ast.html#ast.BoolOp)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprBoolOp {
+    #[serde(skip)]
     pub range: TextRange,
     pub op: BoolOp,
     pub values: Vec<Expr>,
@@ -703,8 +736,9 @@ impl From<ExprBoolOp> for Expr {
 }
 
 /// See also [NamedExpr](https://docs.python.org/3/library/ast.html#ast.NamedExpr)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprNamed {
+    #[serde(skip)]
     pub range: TextRange,
     pub target: Box<Expr>,
     pub value: Box<Expr>,
@@ -717,8 +751,9 @@ impl From<ExprNamed> for Expr {
 }
 
 /// See also [BinOp](https://docs.python.org/3/library/ast.html#ast.BinOp)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprBinOp {
+    #[serde(skip)]
     pub range: TextRange,
     pub left: Box<Expr>,
     pub op: Operator,
@@ -732,8 +767,9 @@ impl From<ExprBinOp> for Expr {
 }
 
 /// See also [UnaryOp](https://docs.python.org/3/library/ast.html#ast.UnaryOp)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprUnaryOp {
+    #[serde(skip)]
     pub range: TextRange,
     pub op: UnaryOp,
     pub operand: Box<Expr>,
@@ -746,8 +782,9 @@ impl From<ExprUnaryOp> for Expr {
 }
 
 /// See also [Lambda](https://docs.python.org/3/library/ast.html#ast.Lambda)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprLambda {
+    #[serde(skip)]
     pub range: TextRange,
     pub parameters: Option<Box<Parameters>>,
     pub body: Box<Expr>,
@@ -760,8 +797,9 @@ impl From<ExprLambda> for Expr {
 }
 
 /// See also [IfExp](https://docs.python.org/3/library/ast.html#ast.IfExp)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprIf {
+    #[serde(skip)]
     pub range: TextRange,
     pub test: Box<Expr>,
     pub body: Box<Expr>,
@@ -797,7 +835,7 @@ impl From<ExprIf> for Expr {
 /// ```
 ///
 /// [1]: https://docs.python.org/3/reference/expressions.html#displays-for-lists-sets-and-dictionaries
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct DictItem {
     pub key: Option<Expr>,
     pub value: Expr,
@@ -823,8 +861,9 @@ impl Ranged for DictItem {
 }
 
 /// See also [Dict](https://docs.python.org/3/library/ast.html#ast.Dict)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprDict {
+    #[serde(skip)]
     pub range: TextRange,
     pub items: Vec<DictItem>,
 }
@@ -971,8 +1010,9 @@ impl<'a> FusedIterator for DictValueIterator<'a> {}
 impl<'a> ExactSizeIterator for DictValueIterator<'a> {}
 
 /// See also [Set](https://docs.python.org/3/library/ast.html#ast.Set)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprSet {
+    #[serde(skip)]
     pub range: TextRange,
     pub elts: Vec<Expr>,
 }
@@ -1007,8 +1047,9 @@ impl From<ExprSet> for Expr {
 }
 
 /// See also [ListComp](https://docs.python.org/3/library/ast.html#ast.ListComp)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprListComp {
+    #[serde(skip)]
     pub range: TextRange,
     pub elt: Box<Expr>,
     pub generators: Vec<Comprehension>,
@@ -1021,8 +1062,9 @@ impl From<ExprListComp> for Expr {
 }
 
 /// See also [SetComp](https://docs.python.org/3/library/ast.html#ast.SetComp)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprSetComp {
+    #[serde(skip)]
     pub range: TextRange,
     pub elt: Box<Expr>,
     pub generators: Vec<Comprehension>,
@@ -1035,8 +1077,9 @@ impl From<ExprSetComp> for Expr {
 }
 
 /// See also [DictComp](https://docs.python.org/3/library/ast.html#ast.DictComp)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprDictComp {
+    #[serde(skip)]
     pub range: TextRange,
     pub key: Box<Expr>,
     pub value: Box<Expr>,
@@ -1050,8 +1093,9 @@ impl From<ExprDictComp> for Expr {
 }
 
 /// See also [GeneratorExp](https://docs.python.org/3/library/ast.html#ast.GeneratorExp)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprGenerator {
+    #[serde(skip)]
     pub range: TextRange,
     pub elt: Box<Expr>,
     pub generators: Vec<Comprehension>,
@@ -1065,8 +1109,9 @@ impl From<ExprGenerator> for Expr {
 }
 
 /// See also [Await](https://docs.python.org/3/library/ast.html#ast.Await)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprAwait {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<Expr>,
 }
@@ -1078,8 +1123,9 @@ impl From<ExprAwait> for Expr {
 }
 
 /// See also [Yield](https://docs.python.org/3/library/ast.html#ast.Yield)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprYield {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Option<Box<Expr>>,
 }
@@ -1091,8 +1137,9 @@ impl From<ExprYield> for Expr {
 }
 
 /// See also [YieldFrom](https://docs.python.org/3/library/ast.html#ast.YieldFrom)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprYieldFrom {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<Expr>,
 }
@@ -1104,8 +1151,9 @@ impl From<ExprYieldFrom> for Expr {
 }
 
 /// See also [Compare](https://docs.python.org/3/library/ast.html#ast.Compare)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprCompare {
+    #[serde(skip)]
     pub range: TextRange,
     pub left: Box<Expr>,
     pub ops: Box<[CmpOp]>,
@@ -1119,8 +1167,9 @@ impl From<ExprCompare> for Expr {
 }
 
 /// See also [Call](https://docs.python.org/3/library/ast.html#ast.Call)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprCall {
+    #[serde(skip)]
     pub range: TextRange,
     pub func: Box<Expr>,
     pub arguments: Arguments,
@@ -1132,8 +1181,9 @@ impl From<ExprCall> for Expr {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct FStringFormatSpec {
+    #[serde(skip)]
     pub range: TextRange,
     pub elements: FStringElements,
 }
@@ -1145,11 +1195,13 @@ impl Ranged for FStringFormatSpec {
 }
 
 /// See also [FormattedValue](https://docs.python.org/3/library/ast.html#ast.FormattedValue)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct FStringExpressionElement {
+    #[serde(skip)]
     pub range: TextRange,
     pub expression: Box<Expr>,
     pub debug_text: Option<DebugText>,
+    #[serde(skip)]
     pub conversion: ConversionFlag,
     pub format_spec: Option<Box<FStringFormatSpec>>,
 }
@@ -1161,8 +1213,9 @@ impl Ranged for FStringExpressionElement {
 }
 
 /// An `FStringLiteralElement` with an empty `value` is an invalid f-string element.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct FStringLiteralElement {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<str>,
 }
@@ -1214,7 +1267,7 @@ impl ConversionFlag {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize)]
 pub struct DebugText {
     /// The text between the `{` and the expression node.
     pub leading: String,
@@ -1229,8 +1282,9 @@ pub struct DebugText {
 /// it keeps them separate and provide various methods to access the parts.
 ///
 /// [JoinedStr]: https://docs.python.org/3/library/ast.html#ast.JoinedStr
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprFString {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: FStringValue,
 }
@@ -1242,7 +1296,7 @@ impl From<ExprFString> for Expr {
 }
 
 /// The value representing an [`ExprFString`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct FStringValue {
     inner: FStringValueInner,
 }
@@ -1360,7 +1414,7 @@ impl<'a> IntoIterator for &'a mut FStringValue {
 }
 
 /// An internal representation of [`FStringValue`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 enum FStringValueInner {
     /// A single f-string i.e., `f"foo"`.
     ///
@@ -1373,7 +1427,7 @@ enum FStringValueInner {
 }
 
 /// An f-string part which is either a string literal or an f-string.
-#[derive(Clone, Debug, PartialEq, is_macro::Is)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Serialize)]
 pub enum FStringPart {
     Literal(StringLiteral),
     FString(FString),
@@ -1562,10 +1616,12 @@ impl fmt::Debug for FStringFlags {
 }
 
 /// An AST node that represents a single f-string which is part of an [`ExprFString`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct FString {
+    #[serde(skip)]
     pub range: TextRange,
     pub elements: FStringElements,
+    #[serde(skip)]
     pub flags: FStringFlags,
 }
 
@@ -1586,7 +1642,7 @@ impl From<FString> for Expr {
 }
 
 /// A newtype wrapper around a list of [`FStringElement`].
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Default, PartialEq, Serialize)]
 pub struct FStringElements(Vec<FStringElement>);
 
 impl FStringElements {
@@ -1645,7 +1701,7 @@ impl fmt::Debug for FStringElements {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, is_macro::Is)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Serialize)]
 pub enum FStringElement {
     Literal(FStringLiteralElement),
     Expression(FStringExpressionElement),
@@ -1662,8 +1718,9 @@ impl Ranged for FStringElement {
 
 /// An AST node that represents either a single string literal or an implicitly
 /// concatenated string literals.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct ExprStringLiteral {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: StringLiteralValue,
 }
@@ -1681,7 +1738,7 @@ impl Ranged for ExprStringLiteral {
 }
 
 /// The value representing a [`ExprStringLiteral`].
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct StringLiteralValue {
     inner: StringLiteralValueInner,
 }
@@ -1815,7 +1872,7 @@ impl fmt::Display for StringLiteralValue {
 }
 
 /// An internal representation of [`StringLiteralValue`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 enum StringLiteralValueInner {
     /// A single string literal i.e., `"foo"`.
     Single(StringLiteral),
@@ -1973,10 +2030,12 @@ impl fmt::Debug for StringLiteralFlags {
 
 /// An AST node that represents a single string literal which is part of an
 /// [`ExprStringLiteral`].
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct StringLiteral {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<str>,
+    #[serde(skip)]
     pub flags: StringLiteralFlags,
 }
 
@@ -2022,11 +2081,12 @@ impl From<StringLiteral> for Expr {
 
 /// An internal representation of [`StringLiteral`] that represents an
 /// implicitly concatenated string.
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 struct ConcatenatedStringLiteral {
     /// Each string literal that makes up the concatenated string.
     strings: Vec<StringLiteral>,
     /// The concatenated string value.
+    #[serde(skip)]
     value: OnceLock<Box<str>>,
 }
 
@@ -2064,8 +2124,9 @@ impl Debug for ConcatenatedStringLiteral {
 
 /// An AST node that represents either a single bytes literal or an implicitly
 /// concatenated bytes literals.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct ExprBytesLiteral {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: BytesLiteralValue,
 }
@@ -2083,7 +2144,7 @@ impl Ranged for ExprBytesLiteral {
 }
 
 /// The value representing a [`ExprBytesLiteral`].
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct BytesLiteralValue {
     inner: BytesLiteralValueInner,
 }
@@ -2204,7 +2265,7 @@ impl<'a> From<&'a BytesLiteralValue> for Cow<'a, [u8]> {
 }
 
 /// An internal representation of [`BytesLiteralValue`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 enum BytesLiteralValueInner {
     /// A single bytes literal i.e., `b"foo"`.
     Single(BytesLiteral),
@@ -2336,10 +2397,12 @@ impl fmt::Debug for BytesLiteralFlags {
 
 /// An AST node that represents a single bytes literal which is part of an
 /// [`ExprBytesLiteral`].
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct BytesLiteral {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<[u8]>,
+    #[serde(skip)]
     pub flags: BytesLiteralFlags,
 }
 
@@ -2671,8 +2734,9 @@ impl From<FStringFlags> for AnyStringFlags {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprNumberLiteral {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Number,
 }
@@ -2689,15 +2753,16 @@ impl Ranged for ExprNumberLiteral {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, is_macro::Is)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Serialize)]
 pub enum Number {
     Int(int::Int),
     Float(f64),
     Complex { real: f64, imag: f64 },
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct ExprBooleanLiteral {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: bool,
 }
@@ -2714,8 +2779,9 @@ impl Ranged for ExprBooleanLiteral {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct ExprNoneLiteral {
+    #[serde(skip)]
     pub range: TextRange,
 }
 
@@ -2731,8 +2797,9 @@ impl Ranged for ExprNoneLiteral {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct ExprEllipsisLiteral {
+    #[serde(skip)]
     pub range: TextRange,
 }
 
@@ -2749,8 +2816,9 @@ impl Ranged for ExprEllipsisLiteral {
 }
 
 /// See also [Attribute](https://docs.python.org/3/library/ast.html#ast.Attribute)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprAttribute {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<Expr>,
     pub attr: Identifier,
@@ -2764,8 +2832,9 @@ impl From<ExprAttribute> for Expr {
 }
 
 /// See also [Subscript](https://docs.python.org/3/library/ast.html#ast.Subscript)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprSubscript {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<Expr>,
     pub slice: Box<Expr>,
@@ -2779,8 +2848,9 @@ impl From<ExprSubscript> for Expr {
 }
 
 /// See also [Starred](https://docs.python.org/3/library/ast.html#ast.Starred)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprStarred {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<Expr>,
     pub ctx: ExprContext,
@@ -2793,8 +2863,9 @@ impl From<ExprStarred> for Expr {
 }
 
 /// See also [Name](https://docs.python.org/3/library/ast.html#ast.Name)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprName {
+    #[serde(skip)]
     pub range: TextRange,
     pub id: Name,
     pub ctx: ExprContext,
@@ -2813,8 +2884,9 @@ impl From<ExprName> for Expr {
 }
 
 /// See also [List](https://docs.python.org/3/library/ast.html#ast.List)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprList {
+    #[serde(skip)]
     pub range: TextRange,
     pub elts: Vec<Expr>,
     pub ctx: ExprContext,
@@ -2850,8 +2922,9 @@ impl From<ExprList> for Expr {
 }
 
 /// See also [Tuple](https://docs.python.org/3/library/ast.html#ast.Tuple)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprTuple {
+    #[serde(skip)]
     pub range: TextRange,
     pub elts: Vec<Expr>,
     pub ctx: ExprContext,
@@ -2890,8 +2963,9 @@ impl From<ExprTuple> for Expr {
 }
 
 /// See also [Slice](https://docs.python.org/3/library/ast.html#ast.Slice)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExprSlice {
+    #[serde(skip)]
     pub range: TextRange,
     pub lower: Option<Box<Expr>>,
     pub upper: Option<Box<Expr>>,
@@ -2905,7 +2979,7 @@ impl From<ExprSlice> for Expr {
 }
 
 /// See also [expr_context](https://docs.python.org/3/library/ast.html#ast.expr_context)
-#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq, Serialize)]
 pub enum ExprContext {
     Load,
     Store,
@@ -2914,7 +2988,7 @@ pub enum ExprContext {
 }
 
 /// See also [boolop](https://docs.python.org/3/library/ast.html#ast.BoolOp)
-#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq, Serialize)]
 pub enum BoolOp {
     And,
     Or,
@@ -2936,7 +3010,7 @@ impl fmt::Display for BoolOp {
 }
 
 /// See also [operator](https://docs.python.org/3/library/ast.html#ast.operator)
-#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq, Serialize)]
 pub enum Operator {
     Add,
     Sub,
@@ -2980,7 +3054,7 @@ impl fmt::Display for Operator {
 }
 
 /// See also [unaryop](https://docs.python.org/3/library/ast.html#ast.unaryop)
-#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq, Serialize)]
 pub enum UnaryOp {
     Invert,
     Not,
@@ -3006,7 +3080,7 @@ impl fmt::Display for UnaryOp {
 }
 
 /// See also [cmpop](https://docs.python.org/3/library/ast.html#ast.cmpop)
-#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Copy, Hash, Eq, Serialize)]
 pub enum CmpOp {
     Eq,
     NotEq,
@@ -3044,8 +3118,9 @@ impl fmt::Display for CmpOp {
 }
 
 /// See also [comprehension](https://docs.python.org/3/library/ast.html#ast.comprehension)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Comprehension {
+    #[serde(skip)]
     pub range: TextRange,
     pub target: Expr,
     pub iter: Expr,
@@ -3054,14 +3129,15 @@ pub struct Comprehension {
 }
 
 /// See also [excepthandler](https://docs.python.org/3/library/ast.html#ast.excepthandler)
-#[derive(Clone, Debug, PartialEq, is_macro::Is)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Serialize)]
 pub enum ExceptHandler {
     ExceptHandler(ExceptHandlerExceptHandler),
 }
 
 /// See also [ExceptHandler](https://docs.python.org/3/library/ast.html#ast.ExceptHandler)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ExceptHandlerExceptHandler {
+    #[serde(skip)]
     pub range: TextRange,
     pub type_: Option<Box<Expr>>,
     pub name: Option<Identifier>,
@@ -3075,40 +3151,45 @@ impl From<ExceptHandlerExceptHandler> for ExceptHandler {
 }
 
 /// See also [arg](https://docs.python.org/3/library/ast.html#ast.arg)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Parameter {
+    #[serde(skip)]
     pub range: TextRange,
     pub name: Identifier,
     pub annotation: Option<Box<Expr>>,
 }
 
 /// See also [keyword](https://docs.python.org/3/library/ast.html#ast.keyword)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Keyword {
+    #[serde(skip)]
     pub range: TextRange,
     pub arg: Option<Identifier>,
     pub value: Expr,
 }
 
 /// See also [alias](https://docs.python.org/3/library/ast.html#ast.alias)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Alias {
+    #[serde(skip)]
     pub range: TextRange,
     pub name: Identifier,
     pub asname: Option<Identifier>,
 }
 
 /// See also [withitem](https://docs.python.org/3/library/ast.html#ast.withitem)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct WithItem {
+    #[serde(skip)]
     pub range: TextRange,
     pub context_expr: Expr,
     pub optional_vars: Option<Box<Expr>>,
 }
 
 /// See also [match_case](https://docs.python.org/3/library/ast.html#ast.match_case)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct MatchCase {
+    #[serde(skip)]
     pub range: TextRange,
     pub pattern: Pattern,
     pub guard: Option<Box<Expr>>,
@@ -3116,7 +3197,7 @@ pub struct MatchCase {
 }
 
 /// See also [pattern](https://docs.python.org/3/library/ast.html#ast.pattern)
-#[derive(Clone, Debug, PartialEq, is_macro::Is)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Serialize)]
 pub enum Pattern {
     MatchValue(PatternMatchValue),
     MatchSingleton(PatternMatchSingleton),
@@ -3167,8 +3248,9 @@ impl Pattern {
 }
 
 /// See also [MatchValue](https://docs.python.org/3/library/ast.html#ast.MatchValue)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternMatchValue {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Box<Expr>,
 }
@@ -3180,8 +3262,9 @@ impl From<PatternMatchValue> for Pattern {
 }
 
 /// See also [MatchSingleton](https://docs.python.org/3/library/ast.html#ast.MatchSingleton)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternMatchSingleton {
+    #[serde(skip)]
     pub range: TextRange,
     pub value: Singleton,
 }
@@ -3193,8 +3276,9 @@ impl From<PatternMatchSingleton> for Pattern {
 }
 
 /// See also [MatchSequence](https://docs.python.org/3/library/ast.html#ast.MatchSequence)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternMatchSequence {
+    #[serde(skip)]
     pub range: TextRange,
     pub patterns: Vec<Pattern>,
 }
@@ -3206,8 +3290,9 @@ impl From<PatternMatchSequence> for Pattern {
 }
 
 /// See also [MatchMapping](https://docs.python.org/3/library/ast.html#ast.MatchMapping)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternMatchMapping {
+    #[serde(skip)]
     pub range: TextRange,
     pub keys: Vec<Expr>,
     pub patterns: Vec<Pattern>,
@@ -3221,8 +3306,9 @@ impl From<PatternMatchMapping> for Pattern {
 }
 
 /// See also [MatchClass](https://docs.python.org/3/library/ast.html#ast.MatchClass)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternMatchClass {
+    #[serde(skip)]
     pub range: TextRange,
     pub cls: Box<Expr>,
     pub arguments: PatternArguments,
@@ -3238,8 +3324,9 @@ impl From<PatternMatchClass> for Pattern {
 /// parenthesized contents in `case Point(1, x=0, y=0)`.
 ///
 /// Like [`Arguments`], but for [`PatternMatchClass`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternArguments {
+    #[serde(skip)]
     pub range: TextRange,
     pub patterns: Vec<Pattern>,
     pub keywords: Vec<PatternKeyword>,
@@ -3249,16 +3336,18 @@ pub struct PatternArguments {
 /// `x=0` and `y=0` in `case Point(x=0, y=0)`.
 ///
 /// Like [`Keyword`], but for [`PatternMatchClass`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternKeyword {
+    #[serde(skip)]
     pub range: TextRange,
     pub attr: Identifier,
     pub pattern: Pattern,
 }
 
 /// See also [MatchStar](https://docs.python.org/3/library/ast.html#ast.MatchStar)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternMatchStar {
+    #[serde(skip)]
     pub range: TextRange,
     pub name: Option<Identifier>,
 }
@@ -3270,8 +3359,9 @@ impl From<PatternMatchStar> for Pattern {
 }
 
 /// See also [MatchAs](https://docs.python.org/3/library/ast.html#ast.MatchAs)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternMatchAs {
+    #[serde(skip)]
     pub range: TextRange,
     pub pattern: Option<Box<Pattern>>,
     pub name: Option<Identifier>,
@@ -3284,8 +3374,9 @@ impl From<PatternMatchAs> for Pattern {
 }
 
 /// See also [MatchOr](https://docs.python.org/3/library/ast.html#ast.MatchOr)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PatternMatchOr {
+    #[serde(skip)]
     pub range: TextRange,
     pub patterns: Vec<Pattern>,
 }
@@ -3297,7 +3388,7 @@ impl From<PatternMatchOr> for Pattern {
 }
 
 /// See also [type_param](https://docs.python.org/3/library/ast.html#ast.type_param)
-#[derive(Clone, Debug, PartialEq, is_macro::Is)]
+#[derive(Clone, Debug, PartialEq, is_macro::Is, Serialize)]
 pub enum TypeParam {
     TypeVar(TypeParamTypeVar),
     ParamSpec(TypeParamParamSpec),
@@ -3305,8 +3396,9 @@ pub enum TypeParam {
 }
 
 /// See also [TypeVar](https://docs.python.org/3/library/ast.html#ast.TypeVar)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct TypeParamTypeVar {
+    #[serde(skip)]
     pub range: TextRange,
     pub name: Identifier,
     pub bound: Option<Box<Expr>>,
@@ -3320,8 +3412,9 @@ impl From<TypeParamTypeVar> for TypeParam {
 }
 
 /// See also [ParamSpec](https://docs.python.org/3/library/ast.html#ast.ParamSpec)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct TypeParamParamSpec {
+    #[serde(skip)]
     pub range: TextRange,
     pub name: Identifier,
     pub default: Option<Box<Expr>>,
@@ -3334,8 +3427,9 @@ impl From<TypeParamParamSpec> for TypeParam {
 }
 
 /// See also [TypeVarTuple](https://docs.python.org/3/library/ast.html#ast.TypeVarTuple)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct TypeParamTypeVarTuple {
+    #[serde(skip)]
     pub range: TextRange,
     pub name: Identifier,
     pub default: Option<Box<Expr>>,
@@ -3348,8 +3442,9 @@ impl From<TypeParamTypeVarTuple> for TypeParam {
 }
 
 /// See also [decorator](https://docs.python.org/3/library/ast.html#ast.decorator)
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Decorator {
+    #[serde(skip)]
     pub range: TextRange,
     pub expression: Expr,
 }
@@ -3421,8 +3516,9 @@ impl Ranged for AnyParameterRef<'_> {
 ///
 /// NOTE: This type differs from the original Python AST. See: [arguments](https://docs.python.org/3/library/ast.html#ast.arguments).
 
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq, Default, Serialize)]
 pub struct Parameters {
+    #[serde(skip)]
     pub range: TextRange,
     pub posonlyargs: Vec<ParameterWithDefault>,
     pub args: Vec<ParameterWithDefault>,
@@ -3629,8 +3725,9 @@ impl<'a> IntoIterator for &'a Parameters {
 ///
 /// NOTE: This type is different from original Python AST.
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ParameterWithDefault {
+    #[serde(skip)]
     pub range: TextRange,
     pub parameter: Parameter,
     pub default: Option<Box<Expr>>,
@@ -3658,15 +3755,16 @@ pub struct ParameterWithDefault {
 /// as they represent the "explicitly specified base classes", while the keyword arguments are
 /// typically used for `metaclass`, with any additional arguments being passed to the `metaclass`.
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Arguments {
+    #[serde(skip)]
     pub range: TextRange,
     pub args: Box<[Expr]>,
     pub keywords: Box<[Keyword]>,
 }
 
 /// An entry in the argument list of a function call.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub enum ArgOrKeyword<'a> {
     Arg(&'a Expr),
     Keyword(&'a Keyword),
@@ -3779,8 +3877,9 @@ impl Arguments {
 /// The `TypeParams` node would span from the left to right brackets (inclusive), and contain
 /// the `T`, `U`, and `V` type parameters in the order they appear in the source code.
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct TypeParams {
+    #[serde(skip)]
     pub range: TextRange,
     pub type_params: Vec<TypeParam>,
 }
@@ -3801,7 +3900,7 @@ pub type Suite = Vec<Stmt>;
 /// The kind of escape command as defined in [IPython Syntax] in the IPython codebase.
 ///
 /// [IPython Syntax]: https://github.com/ipython/ipython/blob/635815e8f1ded5b764d66cacc80bbe25e9e2587f/IPython/core/inputtransformer2.py#L335-L343
-#[derive(PartialEq, Eq, Debug, Clone, Hash, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Hash, Copy, Serialize)]
 pub enum IpyEscapeKind {
     /// Send line to underlying system shell (`!`).
     Shell,
@@ -3892,9 +3991,11 @@ impl IpyEscapeKind {
 /// def 1():
 ///     ...
 /// ```
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize)]
+#[serde(transparent)]
 pub struct Identifier {
     pub id: Name,
+    #[serde(skip)]
     pub range: TextRange,
 }
 
@@ -3971,7 +4072,7 @@ impl Ranged for Identifier {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub enum Singleton {
     None,
     True,
