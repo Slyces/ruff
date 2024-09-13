@@ -11,6 +11,7 @@ pub use semantic_model::{HasTy, SemanticModel};
 
 pub mod ast_node_ref;
 mod db;
+mod logging;
 mod module_name;
 mod module_resolver;
 mod node_key;

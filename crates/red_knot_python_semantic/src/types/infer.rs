@@ -2712,6 +2712,7 @@ mod tests {
     use anyhow::Context;
 
     use crate::db::tests::TestDb;
+    use crate::logging;
     use crate::program::{Program, SearchPathSettings};
     use crate::python_version::PythonVersion;
     use crate::semantic_index::definition::Definition;
@@ -2729,6 +2730,10 @@ mod tests {
     use ruff_python_ast::name::Name;
 
     use super::TypeInferenceBuilder;
+
+    fn setup_tracing() {
+        logging::setup_tracing(logging::VerbosityLevel::Trace).expect("Failed to set up tracing");
+    }
 
     fn setup_db() -> TestDb {
         let db = TestDb::new();
