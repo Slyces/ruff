@@ -4425,6 +4425,25 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn conditional_declaration_is_type() -> anyhow::Result<()> {
+        // Red-Knot used to define conditional declarations as `Unknown | <Type>`, but we should
+        // infer only `<Type>`.
+        let mut db = setup_db();
+
+        db.write_dedented(
+            "/src/a.py",
+            "
+            if flag:
+                x: int = 1
+            ",
+        )?;
+
+        assert_public_ty(&db, "/src/a.py", "x", "int");
+
+        Ok(())
+    }
+
     /// Class name lookups do fall back to globals, but the public type never does.
     #[test]
     fn unbound_class_local() -> anyhow::Result<()> {
